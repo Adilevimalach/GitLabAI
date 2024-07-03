@@ -1,0 +1,13 @@
+{
+  "name": "@gitlab/api-tool",
+  "version": "1.0.0",
+  "description": "A tool to interact with Gitlab API",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
