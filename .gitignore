@@ -8,9 +8,10 @@ frontend/dist/
 # Frontend - Environment files
 frontend/.env.local
 frontend/.env.*.local
-
+frontend/src/assets/
 # Backend - Environment files
 backend/.env
+backend/config.json
 
 # Logs
 logs/

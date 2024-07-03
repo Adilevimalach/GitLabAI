@@ -12,6 +12,10 @@ A tool to interact with the GitLab API to perform CRUD operations on repositorie
 - [Scripts](#scripts)
 - [Dependencies](#dependencies)
 
+## Prerequisites
+
+- Node.js installed on your system. You can download it from the [official Node.js website](https://nodejs.org/).
+
 ## Clone the repository:
 
 ```sh
@@ -34,29 +38,23 @@ npm install
 
 ## Configuration
 
-3. **Create a `.env` file in the backend directory of your project and add the following variables:**
+3. **Add configuration to `.env` file in the backend directory of your project and add the following variables:**
 
 ```sh
-PORT=
-CLIENT_ID=
-CLIENT_SECRET=
-REDIRECT_URI=
-AUTHORIZATION_URL=
-TOKEN_URL=
+PORT=3000
+CLIENT_ID=your_client_id
+CLIENT_SECRET=your_secret_key
+REDIRECT_URI=http://localhost:PORT/oauth/callback
+AUTHORIZATION_URL= https://gitlab.com/oauth/authorize
+TOKEN_URL=https://gitlab.com/oauth/token
 OPENAI_API_KEY=
 ```
 
-4. **Create a `config.json` file in the backend directory of your project with the following content:**
+Make sure to replace the values with your actual Gitlab API credentials.
+More info: https://docs.gitlab.com/ee/api/oauth2.html
 
-```json
-{
-  "access_token": "",
-  "refresh_token": "",
-  "expires_in": ""
-}
-```
+# Usage
 
-**Usage**
 To start the server, run:
 
 ```sh
@@ -77,7 +75,8 @@ cd ../frontend
 npm install
 ```
 
-##Usage
+## Usage
+
 To start the server, run:
 
 ```sh
