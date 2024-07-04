@@ -36,15 +36,15 @@ const constructAuthorizationUrl = (staticConfig) => {
  * @param {Object} staticConfig - The static configuration object.
  */
 const openAuthorizationUrl = (staticConfig) => {
-  console.log('Opening authorization URL...');
   const authorizationUrl = constructAuthorizationUrl(staticConfig);
   exec(`start "" "${authorizationUrl}"`, (error) => {
     if (error) {
       throw new CustomError(
         'Error opening authorization URL',
-        error,
+        500,
         'AuthorizationUrlError',
-        {},
+        { originalError: error.message },
+        null,
         authorizationUrl
       );
     }
@@ -68,7 +68,6 @@ const handleOAuthCallback = async (
   resolve,
   reject
 ) => {
-  console.log('Handling OAuth callback...');
   const params = new URLSearchParams({
     client_id: staticConfig.CLIENT_ID,
     client_secret: staticConfig.CLIENT_SECRET,
@@ -89,9 +88,10 @@ const handleOAuthCallback = async (
       reject(
         new CustomError(
           `OAuth token request failed: ${response.status}`,
-          errorText,
+          500,
           'OAuthCallbackError',
-          {},
+          { response: errorText },
+          null,
           staticConfig.TOKEN_URL
         )
       );
@@ -110,29 +110,30 @@ const handleOAuthCallback = async (
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(data));
     server.close(() => {
-      console.log('Server closed');
       resolve();
     });
   } catch (error) {
     reject(
       new CustomError(
         'OAuth callback processing error',
-        error,
+        500, // Status code for server error
         'OAuthCallbackError',
-        {},
+        { originalError: error.message },
+        null,
         staticConfig.TOKEN_URL
       )
     );
   }
 };
 
+//TODO: check error handling
 /**
  * Creates an OAuth server.
  * @param {Object} staticConfig - The static configuration object.
  * @returns {Promise} A promise that resolves when the server is created.
+ * @throws {CustomError} - If there is an error creating the server.
  */
 export const createServer = (staticConfig) => {
-  console.log('Creating OAuth server...');
   return new Promise((resolve, reject) => {
     server = http
       .createServer((req, res) => {
@@ -167,9 +168,9 @@ export const createServer = (staticConfig) => {
       reject(
         new CustomError(
           'Server error',
-          error,
+          500,
           'ServerError',
-          {},
+          { originalError: error.message },
           `http://localhost:${staticConfig.PORT}`
         )
       );
@@ -189,7 +190,6 @@ export const createServer = (staticConfig) => {
  * @throws {CustomError} - If there is a network error during token refresh.
  */
 export const refreshAccessToken = async (config) => {
-  console.log('Refreshing access token...');
   const params = new URLSearchParams({
     client_id: config.CLIENT_ID,
     client_secret: config.CLIENT_SECRET,

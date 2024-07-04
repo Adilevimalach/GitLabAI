@@ -11,9 +11,6 @@ import { closeAgents } from './services/requestHandler.js';
  * @returns {void}
  */
 const shutdown = (server) => {
-  console.log('Shutting down server...');
-  console.log('Closing agents...');
-
   // Destroy agents to close any remaining keep-alive connections
   closeAgents();
 
@@ -36,7 +33,6 @@ const shutdown = (server) => {
  */
 async function main() {
   try {
-    console.log('Loading configuration...');
     const config = await loadConfiguration();
 
     const PORT = config.PORT || 3000;
@@ -48,7 +44,10 @@ async function main() {
 
     server.on('error', (error) => {
       ErrorHandler.handleError(
-        new CustomError('Server encountered an error', error, 'ServerError')
+        res,
+        new CustomError('Server encountered an error', 500, 'ServerError', {
+          originalError: error.message,
+        })
       );
       shutdown(server);
     });
@@ -57,11 +56,9 @@ async function main() {
     process.on('SIGINT', () => shutdown(server));
   } catch (err) {
     ErrorHandler.handleError(err);
-    console.error('Error in main:', err);
   }
 }
 
 main().catch((err) => {
   ErrorHandler.handleError(err);
-  console.error('Unhandled error in main:', err);
 });

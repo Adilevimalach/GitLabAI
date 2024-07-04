@@ -3,7 +3,6 @@
 import { getEnvVariables } from './config/envLoader.js';
 import { loadDynamicConfig, getDynamicConfig } from './config/dynamicConfig.js';
 import { createServer, refreshAccessToken } from './oauthServer.js';
-import CustomError from '../middleware/CustomError.js';
 
 /**
  * Configuration object.
@@ -52,7 +51,6 @@ export const getRefreshToken = async () => {
  * performs necessary checks, and returns the final configuration object.
  *
  * @returns {Object} The configuration object.
- * @throws {CustomError} If static configurations are missing or required properties are not present.
  * @throws {Error} If any error occurs during the configuration loading process.
  */
 export const loadConfiguration = async () => {
@@ -64,14 +62,6 @@ export const loadConfiguration = async () => {
     throw error;
   }
 
-  if (Object.keys(staticConfig).length === 0) {
-    throw new CustomError(
-      `No error occurred, but .Env Configurations are Missing `,
-      null,
-      'EnvConfigMissing',
-      {}
-    );
-  }
   const dynamicConfig = getDynamicConfig();
   config = { ...staticConfig, ...dynamicConfig };
 

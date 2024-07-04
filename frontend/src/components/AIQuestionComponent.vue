@@ -36,12 +36,17 @@ export default {
   },
   methods: {
     async fetchData() {
+      //hardcoded username and password for basic auth. need to store it securely
+      const username = 'adi';
+      const password = '123456';
+      const base64Credentials = btoa(`${username}:${password}`);
       this.isLoading = true; // Start loading
       try {
         const response = await fetch('http://localhost:3000/user-request', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Basic ${base64Credentials}`,
           },
           body: JSON.stringify({ query: this.query }),
         });

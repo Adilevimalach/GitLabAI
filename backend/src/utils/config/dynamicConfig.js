@@ -28,9 +28,9 @@ async function writeFile(filePath, data) {
   } catch (error) {
     throw new CustomError(
       'Failed to write file',
-      error,
+      500,
       'FileWriteError',
-      {},
+      { originalError: error.message },
       filePath
     );
   }
@@ -61,9 +61,9 @@ export const updateDynamicConfig = async (
   ) {
     throw new CustomError(
       'Invalid parameters for dynamic config',
-      null,
+      400,
       'ParameterValidation',
-      {}
+      { accessToken, refreshToken, expiresIn, createdAt }
     );
   }
   const tokenExpirationTime = createdAt + expiresIn;
@@ -91,9 +91,9 @@ async function readFile(filePath) {
     if (error.code === 'ENOENT') {
       throw new CustomError(
         'Config file not found',
-        error,
+        404,
         'FileNotFound',
-        {},
+        { originalError: error.message },
         filePath
       );
     } else {

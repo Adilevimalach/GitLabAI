@@ -83,7 +83,6 @@ ${JSON.stringify(predefinedJsonString, null, 2)}`;
 export const processResponseGPT = async (prompt, dataJson, apiKey) => {
   // Convert the dataJson to a formatted JSON string
   const formattedDataJson = JSON.stringify(dataJson, null, 2);
-  console.log('Formatted Data JSON:', formattedDataJson);
 
   // Create messages array with clear roles and content
   const messages = [

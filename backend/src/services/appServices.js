@@ -1,7 +1,6 @@
 // Description: The app services module for the GitLab API.
 
 import { requestHandler } from './requestHandler.js';
-import CustomError from '../middleware/CustomError.js';
 
 /**
  * Builds the URL for GitLab API requests based on project ID and endpoint specifics.
@@ -41,8 +40,7 @@ export const fetchRepositoriesUpdatedAfter = async (
  * @param {string} accessToken - The access token for authentication.
  * @returns {Promise<Object>} - A promise that resolves to the extracted fields with description.
  */
-export const fetchRepositoryById = async (projectId, fields, accessToken) => {
-  //TODO:handle empty fetch
+export const fetchRepositoryById = async (projectId, accessToken) => {
   const apiUrl = buildGitLabApiUrl(projectId);
   const gitLabData = await requestHandler(apiUrl, 'GET', accessToken);
   return gitLabData;
@@ -59,12 +57,15 @@ export const deleteRepositoryById = async (projectId, accessToken) => {
   return await requestHandler(apiUrl, 'DELETE', accessToken);
 };
 
-export const updateRepositoryById = async (
-  projectId,
-  updates,
-  fields,
-  accessToken
-) => {
+/**
+ * Updates a repository by its ID.
+ *
+ * @param {string} projectId - The ID of the project.
+ * @param {object} updates - The updates to be applied to the repository.
+ * @param {string} accessToken - The access token for authentication.
+ * @returns {Promise<object>} - A promise that resolves to the update response.
+ */
+export const updateRepositoryById = async (projectId, updates, accessToken) => {
   const apiUrl = buildGitLabApiUrl(projectId);
   const updateResponse = await requestHandler(
     apiUrl,
@@ -80,7 +81,6 @@ export const updateRepositoryById = async (
  * @param {Object} apiRequest - The API request object.
  * @param {string} accessToken - The access token for GitLab API.
  * @returns {Promise} A promise that resolves with the result of the operation.
- * @throws {CustomError} If the operation is invalid or fails.
  */
 export const performOperation = async (apiRequest, accessToken) => {
   try {
@@ -93,7 +93,6 @@ export const performOperation = async (apiRequest, accessToken) => {
       case 'FETCH_REPOSITORY_BY_ID':
         return fetchRepositoryById(
           apiRequest.parameters.projectId,
-          apiRequest.fields,
           accessToken
         );
       case 'DELETE_REPOSITORY':
@@ -109,12 +108,7 @@ export const performOperation = async (apiRequest, accessToken) => {
           accessToken
         );
       default:
-        throw new CustomError(
-          'Invalid operation requested',
-          null,
-          'OperationError',
-          {}
-        );
+      //TODO: handle invalid operation
     }
   } catch (error) {
     throw error;

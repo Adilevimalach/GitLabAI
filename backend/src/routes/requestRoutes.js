@@ -1,9 +1,10 @@
 // Description: Routes for handling user requests.
 
 import { handleUserRequest } from '../controllers/requestController.js';
-import { parseJsonBody, addCorsHeaders } from './commonHandlers.js';
 import ErrorHandler from '../middleware/errorHandler.js';
 import { isTokenExpired, getRefreshToken } from '../utils/config.js';
+import CustomError from '../middleware/CustomError.js';
+import basicAuth from '../middleware/basicAuth.js';
 
 /**
  * Handles incoming HTTP requests and routes them to the appropriate handlers.
@@ -14,8 +15,6 @@ import { isTokenExpired, getRefreshToken } from '../utils/config.js';
  */
 const routes = async (req, res) => {
   const reqUrl = new URL(req.url, `http://${req.headers.host}`);
-  const requestId = new Date().getTime(); // Example unique request ID for logging
-
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     addCorsHeaders(res);
@@ -30,27 +29,21 @@ const routes = async (req, res) => {
   // Main route handling for POST to '/user-request'
   if (reqUrl.pathname === '/user-request' && req.method === 'POST') {
     try {
+      // Perform basic authentication
+      await basicAuth(req);
+
+      // Token expiry check
       if (isTokenExpired()) {
         await getRefreshToken();
       }
-      // Parse JSON body from the request
+
       const body = await parseJsonBody(req);
-      console.log(`[${requestId}] Request body parsed:`, body);
-      req.body = body; // Attach parsed body to the request object for further handling
-
-      // Process the user request
-      console.log(`[${requestId}] Handling user request...`);
-      const responseData = await handleUserRequest(req, res);
-
-      // Send success response
-      sendSuccessResponse(res, responseData);
+      req.body = body;
+      const responseData = await handleUserRequest(req);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'success', responseData }));
     } catch (error) {
-      // Handle any errors that occur during request processing
-      console.error(`[${requestId}] Error handling request:`, error);
-      ErrorHandler.handleError(error); // Proper error handling by logging and responding
-
-      // Send error response
-      sendErrorResponse(res, error);
+      ErrorHandler.handleError(error, res);
     }
   } else {
     // Respond with 404 for all other routes
@@ -60,28 +53,48 @@ const routes = async (req, res) => {
 };
 
 /**
- * Sends a success response.
- * @param {Object} res - The HTTP response object.
- * @param {Object} data - The data to send in the response.
+ * Parses the JSON body of a request.
+ * @param {Object} req - The request object.
+ * @returns {Promise<Object>} - A promise that resolves with the parsed JSON body or rejects with an error.
  */
-const sendSuccessResponse = (res, data) => {
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ status: 'success', data }));
+const parseJsonBody = (req) => {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk.toString(); // Convert Buffer to string
+    });
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(body));
+      } catch (error) {
+        reject(
+          new CustomError(
+            'Failed to parse JSON body',
+            400,
+            'JSONParseError',
+            { originalBody: body },
+            null,
+            null,
+            null,
+            body
+          )
+        );
+      }
+    });
+  });
 };
 
 /**
- * Sends an error response.
- * @param {Object} res - The HTTP response object.
- * @param {Object} error - The error object containing error details.
+ * Adds CORS headers to the response object.
+ * @param {Object} res - The response object.
  */
-const sendErrorResponse = (res, error) => {
-  res.writeHead(error.status || 500, { 'Content-Type': 'application/json' });
-  res.end(
-    JSON.stringify({
-      status: 'error',
-      message: error.message || 'Internal Server Error',
-    })
+const addCorsHeaders = (res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET, POST, PUT, DELETE, OPTIONS'
   );
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 };
 
 export default routes;

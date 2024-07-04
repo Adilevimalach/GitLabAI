@@ -25,17 +25,19 @@ export const predefinedJsonObjects = [
     operation: 'UPDATE_REPOSITORY',
     parameters: {
       projectId: 123456,
-      updates: {
-        name: 'New Project Name',
-        description: 'Updated description',
-        visibility: 'public',
-      },
+      updates: {},
     },
   },
   {
     operation: 'OPERATION_NOT_SUPPORTED',
     parameters: {
       error: 'Missing information in the request',
+      opertionSupported: [
+        'fetch update repositories',
+        'fetch repository by id',
+        'delete repository',
+        'update repository',
+      ],
     },
   },
 ];

@@ -1,121 +1,352 @@
+// class ErrorHandler {
+//   constructor() {
+//     this.handlers = {
+//       FileReadError: this.handleFileReadError,
+//       FileWriteError: this.handleFileWriteError,
+//       JSONParseError: this.handleJSONParseError,
+//       NetworkError: this.handleNetworkError,
+//       OAuthCallbackError: this.handleOAuthCallbackError,
+//       AuthorizationUrlError: this.handleAuthorizationUrlError,
+//       ServerError: this.handleServerError,
+//       EnvConfigMissing: this.handleEnvConfigMissingError,
+//       TokenExpiredError: this.handleTokenExpiredError,
+//       LoadEnvError: this.handleLoadEnvError,
+//       LoadDynamicConfigError: this.handleLoadDynamicConfigError,
+//       OAuthFlowError: this.handleOAuthFlowError,
+//       RefreshTokenError: this.handleRefreshTokenError,
+//       APIError: this.handleAPIRequestError,
+//       ConfigError: this.handleConfigError,
+//       // Add other custom error types as needed
+//     };
+//   }
+
+//   handleError(res = null, error) {
+//     // console.log('Handling error:', error); // Add this line for logging
+//     const handler = this.handlers[error.type];
+//     if (handler) {
+//       handler.call(this, res, error);
+//     } else {
+//       this.handleGenericError(res, error);
+//     }
+//   }
+
+//   handleFileReadError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: `Failed to read file at ${error.filePath}: ${error.message}`,
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleFileWriteError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: `Failed to write file at ${error.filePath}: ${error.message}`,
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleJSONParseError(res, error) {
+//     res.writeHead(400, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: `Failed to parse JSON string: ${error.context.originalBody}`,
+//         error: error.message,
+//       })
+//     );
+//   }
+
+//   handleNetworkError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: `Network error while accessing ${error.url}: ${error.message}`,
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleOAuthCallbackError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: `Error during OAuth callback: ${error.message}`,
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleAuthorizationUrlError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: `Error opening authorization URL: ${error.message}`,
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleServerError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: `Server error: ${error.message}`,
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleEnvConfigMissingError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: 'Environment variables are missing',
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleTokenExpiredError(res, error) {
+//     res.writeHead(401, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: 'Access token is expired',
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleLoadEnvError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: `Error loading environment variables: ${error.message}`,
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleLoadDynamicConfigError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: `Error loading dynamic configuration: ${error.message}`,
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleOAuthFlowError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: `Error during OAuth flow: ${error.message}`,
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleRefreshTokenError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: `Error refreshing access token: ${error.message}`,
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleAPIRequestError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: `API request error while accessing ${error.url}: ${error.message}`,
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleConfigError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: `Configuration file error at ${error.filePath}: ${error.message}`,
+//         context: error.context,
+//       })
+//     );
+//   }
+
+//   handleGenericError(res, error) {
+//     res.writeHead(500, { 'Content-Type': 'application/json' });
+//     res.end(
+//       JSON.stringify({
+//         message: 'An unexpected error occurred',
+//         error: error.message,
+//         context: error.context,
+//       })
+//     );
+//   }
+// }
+
+// export default new ErrorHandler();
+
+import CustomError from './CustomError.js';
 class ErrorHandler {
   constructor() {
     this.handlers = {
-      401: this.handle401Error,
-      403: this.handle403Error,
-      404: this.handle404Error,
-      500: this.handle500Error,
-      // Add other status code handlers as needed...
+      FileReadError: this.handleFileReadError,
+      FileWriteError: this.handleFileWriteError,
+      JSONParseError: this.handleJSONParseError,
+      NetworkError: this.handleNetworkError,
+      OAuthCallbackError: this.handleOAuthCallbackError,
+      AuthorizationUrlError: this.handleAuthorizationUrlError,
+      ServerError: this.handleServerError,
+      EnvConfigMissing: this.handleEnvConfigMissingError,
+      TokenExpiredError: this.handleTokenExpiredError,
+      LoadEnvError: this.handleLoadEnvError,
+      LoadDynamicConfigError: this.handleLoadDynamicConfigError,
+      OAuthFlowError: this.handleOAuthFlowError,
+      RefreshTokenError: this.handleRefreshTokenError,
+      APIError: this.handleAPIRequestError,
+      ConfigError: this.handleConfigError,
+      // Add other custom error types as needed
     };
   }
 
-  handleFileReadError(error, filePath) {
-    console.error(`Failed to read file at ${filePath}:`, error.message);
+  handleError(error, res = null) {
+    if (!error) {
+      console.error('Error object is undefined:', error);
+      this.handleGenericError(
+        res,
+        new CustomError('An unexpected error occurred', 500, 'GenericError', {})
+      );
+      return;
+    }
+
+    if (!error.type) {
+      console.error('Error type is missing or undefined:', error);
+      this.handleGenericError(res, error);
+      return;
+    }
+
+    const handler = this.handlers[error.type];
+    if (handler) {
+      handler.call(this, res, error);
+    } else {
+      this.handleGenericError(res, error);
+    }
+  }
+
+  handleFileReadError(_, error) {
+    console.error(`Failed to read file at ${error.filePath}: ${error.message}`);
     // Additional logging or notification logic can go here
   }
 
-  handleEnvNotLoadedError() {
-    const errorMessage =
-      'Environment variables not loaded. Call loadEnvFile() first.';
-    console.error(errorMessage);
-    // Additional logging or notification logic can go here
-    return {};
-  }
-
-  handleFileWriteError(error, filePath) {
-    console.error(`Failed to write file at ${filePath}:`, error.message);
-    // Additional logging or notification logic can go here
-  }
-
-  handleJSONParseError(error, jsonString) {
-    console.error(`Failed to parse JSON string: ${jsonString}`, error.message);
-    // Additional logging or notification logic can go here
-  }
-
-  handleNetworkError(error, url) {
-    console.error(`Network error while accessing ${url}:`, error.message);
-    // Additional logging or notification logic can go here
-  }
-
-  handleOAuthCallbackError(error) {
-    console.error(`Error during OAuth callback:`, error.message);
-    // Additional logging or notification logic can go here
-  }
-
-  handleAuthorizationUrlError(error) {
-    console.error(`Error opening authorization URL:`, error.message);
-    // Additional logging or notification logic can go here
-  }
-
-  handleServerError(error) {
-    console.error(`Server error:`, error.message);
-    // Additional logging or notification logic can go here
-  }
-
-  handleMissingPropertiesError(missingProperties) {
+  handleFileWriteError(_, error) {
     console.error(
-      `Missing required properties: ${missingProperties.join(', ')}`
+      `Failed to write file at ${error.filePath}: ${error.message}`
     );
     // Additional logging or notification logic can go here
   }
 
-  handleTokenExpiredError() {
-    console.error('Access token is expired');
+  handleJSONParseError(_, error) {
+    console.error(
+      `Failed to parse JSON string: ${error.context.originalBody}`,
+      error.message
+    );
     // Additional logging or notification logic can go here
   }
 
-  handleLoadEnvError(error) {
+  handleNetworkError(_, error) {
+    console.error(
+      `Network error while accessing ${error.url}: ${error.message}`
+    );
+    // Additional logging or notification logic can go here
+  }
+
+  handleOAuthCallbackError(_, error) {
+    console.error(`Error during OAuth callback: ${error.message}`);
+    // Additional logging or notification logic can go here
+  }
+
+  handleAuthorizationUrlError(_, error) {
+    console.error(`Error opening authorization URL: ${error.message}`);
+    // Additional logging or notification logic can go here
+  }
+
+  handleServerError(res, error) {
+    this.sendResponse(res, 500, {
+      message: `Server error: ${error.message}`,
+      context: error.context,
+    });
+  }
+
+  handleEnvConfigMissingError(res, error) {
+    this.sendResponse(res, 500, {
+      message: 'Environment variables are missing',
+      context: error.context,
+    });
+  }
+
+  handleTokenExpiredError(res, error) {
+    this.sendResponse(res, 401, {
+      message: 'Access token is expired',
+      context: error.context,
+    });
+  }
+
+  handleLoadEnvError(_, error) {
     console.error('Error loading environment variables:', error.message);
     // Additional logging or notification logic can go here
   }
 
-  handleLoadDynamicConfigError(error) {
+  handleLoadDynamicConfigError(_, error) {
     console.error('Error loading dynamic configuration:', error.message);
     // Additional logging or notification logic can go here
   }
 
-  handleOAuthFlowError(error) {
+  handleOAuthFlowError(_, error) {
     console.error('Error during OAuth flow:', error.message);
     // Additional logging or notification logic can go here
   }
 
-  handleRefreshTokenError(error) {
+  handleRefreshTokenError(_, error) {
     console.error('Error refreshing access token:', error.message);
     // Additional logging or notification logic can go here
   }
 
-  handleAPIRequestError(error, url) {
-    console.error(`API request error while accessing ${url}:`, error.message);
+  handleAPIRequestError(_, error) {
+    console.error(
+      `API request error while accessing ${error.url}: ${error.message}`
+    );
     // Additional logging or notification logic can go here
   }
 
-  handleConfigError(error, filePath) {
-    console.error(`Configuration file error at ${filePath}:`, error.message);
+  handleConfigError(_, error) {
+    console.error(
+      `Configuration file error at ${error.filePath}: ${error.message}`
+    );
     // Additional logging or notification logic can go here
   }
 
-  handle401Error(url) {
-    console.error(`Unauthorized access to ${url}. Please authenticate.`);
+  handleGenericError(res, error) {
+    this.sendResponse(res, 500, {
+      message: 'An unexpected error occurred',
+      error: error.message,
+      context: error.context,
+    });
   }
 
-  handle403Error(url) {
-    console.error(`Forbidden access to ${url}.`);
-  }
-
-  handle404Error(url) {
-    console.error(`Resource not found at ${url}.`);
-  }
-
-  handle500Error(url) {
-    console.error(`Internal server error at ${url}.`);
-  }
-
-  handleError(status, url) {
-    const handler = this.handlers[status];
-    if (handler) {
-      handler.call(this, url);
+  sendResponse(res, statusCode, errorResponse) {
+    if (res) {
+      res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(errorResponse));
     } else {
-      console.error(`Unhandled error with status code ${status} at ${url}.`);
+      console.error('No response object provided:', errorResponse);
     }
   }
 }
