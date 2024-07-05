@@ -24,21 +24,21 @@ git clone https://github.com/Adilevimalach/GitLabAI
 
 ## Backend Installation
 
-1. **Navigate to the backend Directory**
+**Navigate to the backend Directory**
 
 ```sh
 cd backend
 ```
 
-2. **Install the dependencies:**
+**Install the dependencies:**
 
 ```sh
 npm install
 ```
 
-## Configuration
+## Backend Configuration
 
-3. **Add configuration to `.env` file in the backend directory of your project and add the following variables:**
+**Add configuration to `.env` file in the backend directory of your project and add the following variables:**
 
 ```sh
 PORT=3000
@@ -47,11 +47,15 @@ CLIENT_SECRET=your_secret_key
 REDIRECT_URI=http://localhost:PORT/oauth/callback
 AUTHORIZATION_URL= https://gitlab.com/oauth/authorize
 TOKEN_URL=https://gitlab.com/oauth/token
+BASIC_AUTH_USERNAME=
+BASIC_AUTH_PASSWORD=
 OPENAI_API_KEY=
 ```
 
 Make sure to replace the values with your actual Gitlab API credentials.
 More info: https://docs.gitlab.com/ee/api/oauth2.html
+
+BASIC_AUTH_USERNAME and BASIC_AUTH_PASSWORD using to create basic auth to the server.
 
 # Usage
 
@@ -63,16 +67,25 @@ npm start
 
 ## Frontend Installation
 
-1. **Navigate to the fronted Directory**
+**Navigate to the fronted Directory**
 
 ```sh
 cd ../frontend
 ```
 
-4. **Install Dependencies**
+**Install Dependencies**
 
 ```sh
 npm install
+```
+
+## Frontend Configuration
+
+**Add configuration to `.env` file in the frontend directory of your project and add the following variables:**
+
+```sh
+BASIC_AUTH_USERNAME=
+BASIC_AUTH_PASSWORD=
 ```
 
 ## Usage
