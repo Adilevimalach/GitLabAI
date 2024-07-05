@@ -6,11 +6,18 @@ A tool to interact with the GitLab API to perform CRUD operations on repositorie
 
 ## Table of Contents
 
-- [Installation](#installation)
-- [Configuration](#configuration)
+- [Prerequisites](#prerequisites)
+- [Clone the repository](#clone-the-repository)
+- [Backend Installation](#backend-installation)
+  - [Navigate to the backend Directory](#navigate-to-the-backend-directory)
+  - [Install the dependencies](#install-the-dependencies)
+- [Backend Configuration](#backend-configuration)
 - [Usage](#usage)
-- [Scripts](#scripts)
-- [Dependencies](#dependencies)
+- [Frontend Installation](#frontend-installation)
+  - [Navigate to the frontend Directory](#navigate-to-the-frontend-directory)
+  - [Install Dependencies](#install-dependencies)
+- [Frontend Configuration](#frontend-configuration)
+- [Usage](#usage-1)
 
 ## Prerequisites
 
