@@ -15,6 +15,7 @@ import basicAuth from '../middleware/basicAuth.js';
  */
 const routes = async (req, res) => {
   const reqUrl = new URL(req.url, `http://${req.headers.host}`);
+
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     addCorsHeaders(res);
@@ -30,8 +31,8 @@ const routes = async (req, res) => {
   if (reqUrl.pathname === '/user-request' && req.method === 'POST') {
     try {
       // Perform basic authentication
-      await basicAuth(req);
 
+      await basicAuth(req);
       // Token expiry check
       if (isTokenExpired()) {
         await getRefreshToken();

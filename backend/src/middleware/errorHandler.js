@@ -253,7 +253,7 @@ class ErrorHandler {
     // Additional logging or notification logic can go here
   }
 
-  handleJSONParseError(_, error) {
+  handleJSONParseError(error) {
     console.error(
       `Failed to parse JSON string: ${error.context.originalBody}`,
       error.message
@@ -261,11 +261,14 @@ class ErrorHandler {
     // Additional logging or notification logic can go here
   }
 
-  handleNetworkError(_, error) {
+  handleNetworkError(res, error) {
     console.error(
       `Network error while accessing ${error.url}: ${error.message}`
     );
-    // Additional logging or notification logic can go here
+    this.sendResponse(res, 500, {
+      message: `Network error while accessing ${error.url}: ${error.message}`,
+      context: error.context,
+    });
   }
 
   handleOAuthCallbackError(_, error) {

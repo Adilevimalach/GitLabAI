@@ -29,7 +29,15 @@ export const fetchRepositoriesUpdatedAfter = async (
     '',
     `?membership=true&updated_after=${updatedAfter}&order_by=updated_at&sort=desc`
   );
-  return await requestHandler(apiUrl, 'GET', accessToken);
+  const data = await requestHandler(apiUrl, 'GET', accessToken);
+
+  // Extract only the id and last_activity_at fields
+  const filteredData = data.map((repo) => ({
+    id: repo.id,
+    updated_at: repo.updated_at,
+  }));
+
+  return filteredData;
 };
 
 /**
@@ -104,11 +112,14 @@ export const performOperation = async (apiRequest, accessToken) => {
         return updateRepositoryById(
           apiRequest.parameters.projectId,
           apiRequest.parameters.updates,
-          apiRequest.fields,
           accessToken
         );
       default:
-      //TODO: handle invalid operation
+        const result = {
+          operation: 'OPERATION_NOT_SUPPORTED',
+          message: 'We support basic CRUD operations on GitLab repositories.',
+        };
+        return result;
     }
   } catch (error) {
     throw error;

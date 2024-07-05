@@ -5,7 +5,6 @@ export function chainWebpack(config) {
     .use('vue-loader')
     .loader('vue-loader')
     .tap((options) => {
-      // modify the options...
       return options;
     });
 
@@ -14,7 +13,6 @@ export function chainWebpack(config) {
     .use('babel-loader')
     .loader('babel-loader')
     .tap((options) => {
-      // modify the options...
       return options;
     });
 }

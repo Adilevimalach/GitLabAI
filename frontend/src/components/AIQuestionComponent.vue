@@ -37,19 +37,22 @@ export default {
   methods: {
     async fetchData() {
       //hardcoded username and password for basic auth. need to store it securely
-      const username = 'adi';
-      const password = '123456';
-      const base64Credentials = btoa(`${username}:${password}`);
+      const userName = process.env.VUE_APP_USER_NAME;
+      const password = process.env.VUE_APP_PASSWORD;
+      console.log(userName, password);
+      const credentials = `${userName}:${password}`;
+      const encodedCredentials = btoa(credentials);
       this.isLoading = true; // Start loading
       try {
         const response = await fetch('http://localhost:3000/user-request', {
           method: 'POST',
           headers: {
+            Authorization: `Basic ${encodedCredentials}`,
             'Content-Type': 'application/json',
-            Authorization: `Basic ${base64Credentials}`,
           },
           body: JSON.stringify({ query: this.query }),
         });
+        console.log(response);
         if (response.ok) {
           const data = await response.json();
           this.handleResponse(data);
@@ -58,13 +61,14 @@ export default {
           this.handleError(`Error ${response.status}: ${errorData.message}`);
         }
       } catch (error) {
+        console.log('Error:', error);
         this.handleError(`Fetch error: ${error.message}`);
       }
       this.isLoading = false; // Stop loading
     },
     handleResponse(data) {
       console.log('Response received in AIQuestionComponent:', data);
-      this.answer = data.data; // Update this line
+      this.answer = data.responseData; // Update this line
       this.repositories = data.repositories || [];
       this.error = ''; // Clear error on successful response
     },

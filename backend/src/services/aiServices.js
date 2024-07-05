@@ -48,10 +48,10 @@ export const processPromptGPT = async (prompt, apiKey) => {
 
   const editedPrompt = `User Input: ${prompt}
 
-Task: Identify which CRUD operation the user wants to perform from the following predefined operations: FETCH_UPDATED_REPOSITORIES, FETCH_REPOSITORY_BY_ID, DELETE_REPOSITORY, UPDATE_REPOSITORY, and OPERATION_NOT_SUPPORTED. Based on the identified operation, return the corresponding predefined JSON object for that operation.
+Task: Identify which CRUD operation the user wants to perform from the following predefined operations: FETCH_UPDATED_REPOSITORIES, FETCH_REPOSITORY_BY_ID, DELETE_REPOSITORY, UPDATE_REPOSITORY, and OPERATION_NOT_SUPPORTED. Based on the identified operation, return the corresponding predefined JSON object for that operation. Ensure that the returned JSON object includes only the fields that have non-empty values.
 
 Here are the predefined JSON objects:
-${JSON.stringify(predefinedJsonString, null, 2)}`;
+${predefinedJsonString}`;
 
   const systemMessage = `You are an assistant that returns only the predefined JSON objects based on user requests. Here are the predefined objects: ${predefinedJsonString}`;
 
@@ -83,18 +83,40 @@ ${JSON.stringify(predefinedJsonString, null, 2)}`;
 export const processResponseGPT = async (prompt, dataJson, apiKey) => {
   // Convert the dataJson to a formatted JSON string
   const formattedDataJson = JSON.stringify(dataJson, null, 2);
+  const dynamicInstructions = `
+  You are an assistant designed to analyze and provide accurate insights based on the provided data. Your task is to answer the user's specific query clearly and completely, using the fields in the provided data.
 
-  // Create messages array with clear roles and content
+  - If the data contains relevant information, generate a user-friendly and complete message based on the user's query.
+  - If the data contains an "error" field or it doesn't have the relevant information, generate a user-friendly message based on the error information provided. Do not simply repeat the error message from the data. Instead, use it to provide a clear and helpful response to the user.
+  - Ensure you answer the user prompt and do not use the word "JSON" in your response.
+
+  Provided Data:
+  ${formattedDataJson}
+
+  User Prompt:
+  ${prompt}
+
+  Provide a complete response to the user based on the provided data.
+`;
+  // const dynamicInstructions = `
+  //   You are an assistant designed to analyze and provide accurate insights based on the provided JSON data. Use the fields in the JSON object to answer the user's specific query in a clear and helpful manner.
+  //   Generate a user-friendly message based on the provided data.
+  //   If the JSON data contains an "error" field, generate a user-friendly message based on the error information provided. Do not simply repeat the error message from the JSON. Instead, use it to provide a clear and helpful response to the user.
+
+  //   JSON Data:
+  //   ${formattedDataJson}
+
+  //   User Prompt:
+  //   ${prompt}
+  // `;
+
   const messages = [
     {
       role: 'system',
-      content:
-        "You are an assistant designed to analyze and provide accurate insights based on the provided JSON data. Use the fields in the following JSON object to answer the user's specific query.",
+      content: dynamicInstructions,
     },
-    { role: 'system', content: `Data: ${formattedDataJson}` },
     { role: 'user', content: prompt },
   ];
-
   // Prepare the data for the OpenAI API call
   const data = {
     model: 'gpt-3.5-turbo',

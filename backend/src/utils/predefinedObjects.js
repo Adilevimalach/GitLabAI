@@ -6,26 +6,37 @@ export const predefinedJsonObjects = [
   {
     operation: 'FETCH_UPDATED_REPOSITORIES',
     parameters: {
-      updatedAfter: 'YYYY-MM-DD',
+      updatedAfter: 'YYYY-01-01',
     },
   },
   {
     operation: 'FETCH_REPOSITORY_BY_ID',
     parameters: {
-      projectId: 123456,
+      projectId: '',
     },
   },
   {
     operation: 'DELETE_REPOSITORY',
     parameters: {
-      projectId: 123456,
+      projectId: '',
     },
   },
   {
     operation: 'UPDATE_REPOSITORY',
     parameters: {
-      projectId: 123456,
-      updates: {},
+      projectId: '',
+      updates: {
+        name: '',
+        description: '',
+        visibility: '',
+        default_branch: '',
+        issues_enabled: '',
+        merge_requests_enabled: '',
+        jobs_enabled: '',
+        wiki_enabled: '',
+        container_registry_enabled: '',
+        shared_runners_enabled: '',
+      },
     },
   },
   {
@@ -33,7 +44,7 @@ export const predefinedJsonObjects = [
     parameters: {
       error: 'Missing information in the request',
       opertionSupported: [
-        'fetch update repositories',
+        'fetch repositories by updated date',
         'fetch repository by id',
         'delete repository',
         'update repository',

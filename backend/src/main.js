@@ -3,7 +3,6 @@ import routes from './routes/requestRoutes.js';
 import { loadConfiguration } from './utils/config.js';
 import ErrorHandler from './middleware/errorHandler.js';
 import CustomError from './middleware/CustomError.js';
-import { closeAgents } from './services/requestHandler.js';
 
 /**
  * Shuts down the server gracefully.
@@ -11,9 +10,6 @@ import { closeAgents } from './services/requestHandler.js';
  * @returns {void}
  */
 const shutdown = (server) => {
-  // Destroy agents to close any remaining keep-alive connections
-  closeAgents();
-
   // Close the server
   server.close(() => {
     console.log('Server shut down gracefully.');

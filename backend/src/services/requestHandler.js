@@ -1,16 +1,7 @@
 // Description: This file contains the requestHandler function that is used to make API requests.
 
 import fetch from 'node-fetch';
-import http from 'http';
-
 import CustomError from '../middleware/CustomError.js';
-
-// Create HTTP and HTTPS agents with keep-alive and a timeout of 20-30 seconds
-/**TODO:
- * HTTP agent for handling requests.
- * @type {http.Agent}
- */
-const httpAgent = new http.Agent({ keepAlive: true, timeout: 30000 });
 
 /**
  * Handles HTTP requests to the specified URL with the given method, access token, and optional request body.
@@ -28,7 +19,6 @@ export const requestHandler = async (url, method, accessToken, body = null) => {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    httpAgent, // Use the appropriate agent
     timeout: 5000, // TODO:5 seconds timeout for the entire request
   };
 
@@ -39,18 +29,6 @@ export const requestHandler = async (url, method, accessToken, body = null) => {
   try {
     const response = await fetch(url, options);
     const responseBody = await response.text();
-    if (!response.ok) {
-      throw new CustomError(
-        `API request failed with status ${response.status}`,
-        response.status,
-        'APIError',
-        { response: responseBody },
-        null,
-        url,
-        method,
-        responseBody
-      );
-    }
 
     // Check the content type before parsing
     const contentType = response.headers.get('Content-Type');
@@ -79,11 +57,4 @@ export const requestHandler = async (url, method, accessToken, body = null) => {
       method
     );
   }
-};
-
-/**
- * Closes the HTTP and HTTPS agents.
- */
-export const closeAgents = () => {
-  httpAgent.destroy();
 };

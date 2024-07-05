@@ -20,14 +20,24 @@ export const handleUserRequest = async (req) => {
       await getRefreshToken();
     }
     const aiResponse = await processPromptGPT(query, config.OPENAI_API_KEY);
+    // const aiResponseTest = {
+    //   operation: 'FETCH_UPDATED_REPOSITORIES',
+    //   parameters: {
+    //     updatedAfter: '2024-01-01',
+    //   },
+    // };
+    console.log('AI Response:', aiResponse);
     const dataJson = await performOperation(aiResponse, config.access_token);
+    console.log('Data JSON:', dataJson);
     const processedResponse = await processResponseGPT(
       query,
       dataJson,
       config.OPENAI_API_KEY
     );
+    console.log('Processed Response:', processedResponse);
     return processedResponse;
   } catch (error) {
+    console.log('Error in handleUserRequest:', error);
     throw error;
   }
 };
