@@ -197,14 +197,12 @@ export const refreshAccessToken = async (config) => {
     grant_type: 'refresh_token',
     redirect_uri: config.REDIRECT_URI,
   });
-
   try {
     const response = await fetch(config.TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params,
     });
-
     if (!response.ok) {
       const errorText = await response.text();
       throw new CustomError(

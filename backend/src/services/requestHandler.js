@@ -21,16 +21,12 @@ export const requestHandler = async (url, method, accessToken, body = null) => {
     },
     timeout: 5000, // TODO:5 seconds timeout for the entire request
   };
-
   if (body) {
     options.body = JSON.stringify(body);
   }
-
   try {
     const response = await fetch(url, options);
     const responseBody = await response.text();
-
-    // Check the content type before parsing
     const contentType = response.headers.get('Content-Type');
     if (!contentType || !contentType.includes('application/json')) {
       throw new CustomError(
@@ -44,8 +40,12 @@ export const requestHandler = async (url, method, accessToken, body = null) => {
         responseBody
       );
     }
-
-    return JSON.parse(responseBody);
+    return {
+      status: response.status,
+      statusText: response.statusText,
+      body: JSON.parse(responseBody),
+      response: response,
+    };
   } catch (error) {
     throw new CustomError(
       'Network error during API request',

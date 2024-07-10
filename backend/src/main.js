@@ -3,6 +3,7 @@ import routes from './routes/requestRoutes.js';
 import { loadConfiguration } from './utils/config.js';
 import ErrorHandler from './middleware/errorHandler.js';
 import CustomError from './middleware/CustomError.js';
+import { initializeAllCaches } from './utils/cache.js';
 
 /**
  * Shuts down the server gracefully.
@@ -30,7 +31,9 @@ const shutdown = (server) => {
 async function main() {
   try {
     const config = await loadConfiguration();
-
+    initializeAllCaches().catch((error) =>
+      console.error('Cache initialization failed:', error)
+    );
     const PORT = config.PORT || 3000;
     const server = http.createServer(routes);
 

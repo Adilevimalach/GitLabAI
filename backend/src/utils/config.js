@@ -20,8 +20,8 @@ const requiredProperties = ['access_token', 'refresh_token'];
  * Checks if all required properties are present in the config object.
  * @returns {boolean} True if all required properties are present, false otherwise.
  */
-const areRequiredPropertiesPresent = () => {
-  return requiredProperties.every((property) => config[property]);
+const areRequiredPropertiesPresent = (dynamicConfig) => {
+  return requiredProperties.every((property) => dynamicConfig[property]);
 };
 
 /**
@@ -30,7 +30,8 @@ const areRequiredPropertiesPresent = () => {
  */
 export const isTokenExpired = () => {
   const currentTime = Math.floor(Date.now() / 1000);
-  return currentTime >= config.expires_in;
+  const tokenExpirationTime = config.created_at + config.expires_in;
+  return currentTime >= tokenExpirationTime;
 };
 
 /**
@@ -41,6 +42,8 @@ export const isTokenExpired = () => {
 export const getRefreshToken = async () => {
   try {
     await refreshAccessToken(config);
+    const updatedDynamicConfig = getDynamicConfig();
+    config = { ...config, ...updatedDynamicConfig };
   } catch (error) {
     throw error;
   }
@@ -54,32 +57,23 @@ export const getRefreshToken = async () => {
  * @throws {Error} If any error occurs during the configuration loading process.
  */
 export const loadConfiguration = async () => {
-  let staticConfig = {};
   try {
-    staticConfig = await getEnvVariables();
+    const staticConfig = getEnvVariables();
     await loadDynamicConfig();
-  } catch (error) {
-    throw error;
-  }
+    const dynamicConfig = getDynamicConfig();
 
-  const dynamicConfig = getDynamicConfig();
-  config = { ...staticConfig, ...dynamicConfig };
-
-  try {
-    if (!areRequiredPropertiesPresent()) {
+    if (!areRequiredPropertiesPresent(dynamicConfig)) {
       await createServer(staticConfig);
-      // await loadDynamicConfig(); // Assume this reloads dynamic configuration correctly after OAuth-
       const updatedDynamicConfig = getDynamicConfig();
-      config = { ...staticConfig, ...updatedDynamicConfig };
-    }
-    if (isTokenExpired()) {
-      await getRefreshToken();
-      const updatedDynamicConfig = getDynamicConfig();
-      config = { ...staticConfig, ...updatedDynamicConfig };
+      config = { ...config, ...updatedDynamicConfig };
+    } else {
+      config = { ...staticConfig, ...dynamicConfig };
+      if (isTokenExpired()) {
+        await getRefreshToken(); // This updates the global config
+      }
     }
   } catch (error) {
     throw error;
   }
-
   return config;
 };

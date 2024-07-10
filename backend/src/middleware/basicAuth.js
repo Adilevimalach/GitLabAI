@@ -20,7 +20,6 @@ const basicAuth = async (req) => {
 
   const validUsername = config.BASIC_AUTH_USERNAME;
   const validPassword = config.BASIC_AUTH_PASSWORD;
-
   if (username !== validUsername || password !== validPassword) {
     throw new CustomError('Invalid username or password', 401, 'Auth', {
       authHeader: authHeader,

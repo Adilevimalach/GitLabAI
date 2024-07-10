@@ -1,16 +1,16 @@
 // Description: This file contains the functions for processing user prompts and responses using the OpenAI API.
-import { predefinedJsonObjects } from '../utils/predefinedObjects.js';
+import { JsonCacheObjects } from '../utils/predefinedObjects.js';
 import { requestHandler } from './requestHandler.js';
 
 /**
- * Performs an OpenAI request using the provided API URL, API key, and request data.
+ * Performs an OpenAI request.
+ *
  * @param {string} apiUrl - The URL of the OpenAI API.
  * @param {string} apiKey - The API key for authentication.
  * @param {Object} requestData - The data to be sent in the request.
- * @param {boolean} [expectJsonResponse=true] - Indicates whether to expect a JSON response. Default is true.
- * @returns {Promise<Object|string>} - A promise that resolves to the parsed JSON response (if expectJsonResponse is true),
- * or the response content as a string (if expectJsonResponse is false).
- * @throws {Error} - If there is an error performing the request or parsing the JSON response.
+ * @param {boolean} [expectJsonResponse=true] - Indicates whether to expect a JSON response.
+ * @returns {Promise<Object|string>} - The response from the OpenAI API.
+ * @throws {Error} - If there is an error performing the request or parsing the response.
  */
 const performOpenAIRequest = async (
   apiUrl,
@@ -18,42 +18,63 @@ const performOpenAIRequest = async (
   requestData,
   expectJsonResponse = true
 ) => {
-  try {
-    const response = await requestHandler(apiUrl, 'POST', apiKey, requestData);
-    const responseContent = response.choices[0].message.content.trim();
-
-    if (expectJsonResponse) {
+  return requestHandler(apiUrl, 'POST', apiKey, requestData)
+    .then((response) => {
+      const responseContent = response.body.choices[0].message.content.trim();
+      if (!expectJsonResponse) return responseContent;
       try {
         return JSON.parse(responseContent);
       } catch (parseError) {
-        //TODO: create custom error massage as did before
         throw new Error(`Failed to parse JSON response: ${parseError.message}`);
       }
-    } else {
-      return responseContent;
-    }
-  } catch (error) {
-    throw error;
-  }
+    })
+    .catch((error) => {
+      throw new Error(`Error performing the API request: ${error.message}`);
+    });
 };
 
 /**
- * Processes the prompt using the GPT-3.5-turbo model and returns the response.
- * @param {string} prompt - The user input prompt.
- * @param {string} apiKey - The API key for OpenAI.
- * @returns {Promise} - A promise that resolves to the response from OpenAI.
+ * Processes the user prompt using the GPT-3.5-turbo model and caches the response.
+ * @param {string} prompt - The user prompt to process.
+ * @param {string} apiKey - The API key for accessing the OpenAI service.
+ * @returns {Promise} - A promise that resolves to the response from the OpenAI service.
  */
-export const processPromptGPT = async (prompt, apiKey) => {
-  const predefinedJsonString = JSON.stringify(predefinedJsonObjects, null, 2);
+export const processPromptGPTToCache = async (prompt, apiKey) => {
+  const predefinedJsonString = JSON.stringify(JsonCacheObjects);
+  const editedPrompt = `Based on the user input: "${prompt}", identify the appropriate operation from the options: DELETE_REPOSITORY, UPDATE_REPOSITORY, UPDATE_AFTER_REPOSITORY, MORE_INFO_OPERATION, and MISSING_INFO_OPERATION. Extract relevant details such as project IDs, update fields, or dates from the input to populate the predefined JSON object for the identified operation.
 
-  const editedPrompt = `User Input: ${prompt}
+  Predefined operations and their expected data formats are:
+  ${predefinedJsonString}`;
 
-Task: Identify which CRUD operation the user wants to perform from the following predefined operations: FETCH_UPDATED_REPOSITORIES, FETCH_REPOSITORY_BY_ID, DELETE_REPOSITORY, UPDATE_REPOSITORY, and OPERATION_NOT_SUPPORTED. Based on the identified operation, return the corresponding predefined JSON object for that operation. Ensure that the returned JSON object includes only the fields that have non-empty values.
+  const systemMessage = `You are assigned to analyze the user input to determine the most relevant operation and provide a response using a predefined JSON object. Specifically, if you identify the operation as MORE_INFO_OPERATION, consider the following data sources:
 
-Here are the predefined JSON objects:
-${predefinedJsonString}`;
+  -'cacheProjectsById' contains project details such as ID, name, description, visibility, and last activity date, aiding in project identification and tracking.
 
-  const systemMessage = `You are an assistant that returns only the predefined JSON objects based on user requests. Here are the predefined objects: ${predefinedJsonString}`;
+  -'cacheCommitsById' stores commit information, including commit ID, message, timestamp, author details, and changes made, facilitating version control and tracking.
+
+  -'cacheBranchesById' provides details on commits within a project's repository, including commit IDs, messages, timestamps, author details, and more.
+
+  -'cacheContributorsById' includes data on contributors with their commit count, email, names, and the extent of their contributions (additions and deletions), which helps identify key contributors.
+
+  -'cacheMembersById' offers information on project members, such as ID, username, access level, and join date.
+
+  -'cacheTreesById' shows a tree view of the files and directories in a project's repository at a specified commit or branch, aiding in repository navigation.
+
+  -The list of project IDs can be empty, but there should always be at least one valid option in the caches.
+  -If a specific project ID is not recognized directly from the user prompt, retrieve and return all pertinent information related to the queried topic.
+
+  -If you found the operation to be UPDATE_REPOSITORY, ensure that the response includes a project id and field to update otherwise response MISSING_INFO_OPERATION with a message about the missing information .
+
+  -If you found the operation to be DELETE_REPOSITORY, ensure that the response includes a project id, otherwise response MISSING_INFO_OPERATION with a message about the missing information .
+
+  -If you found the operation to be UPDATE_AFTER_REPOSITORY look for a date in do by the following:
+  Default to the start of a month if the month is given but not the day, and to the beginning of the year if no year is specified, using 2024 as the fallback year.
+  otherwise response MISSING_INFO_OPERATION with a message about the missing information  .
+
+  Instructions:
+  -Focus your response only on the caches directly relevant to the query, ensuring the highest probability of providing a pertinent answer. Your response should be formatted as JSON, without additional text or markdown formatting.
+
+  -Keep the essence of the instructions intact, ensuring that all essential details are conveyed succinctly. When making an API call to OpenAI, this script should elicit a precise and highly probable response based on the user's query.`;
 
   const data = {
     model: 'gpt-3.5-turbo',
@@ -61,7 +82,7 @@ ${predefinedJsonString}`;
       { role: 'system', content: systemMessage },
       { role: 'user', content: editedPrompt },
     ],
-    max_tokens: 150,
+    max_tokens: 200,
     temperature: 0,
     top_p: 1,
     frequency_penalty: 0,
@@ -69,69 +90,38 @@ ${predefinedJsonString}`;
   };
 
   const url = 'https://api.openai.com/v1/chat/completions';
-  return performOpenAIRequest(url, apiKey, data, true);
+  return await performOpenAIRequest(url, apiKey, data, true);
 };
 
-/**
- * Process the response using the GPT model.
- *
- * @param {string} prompt - The user's query prompt.
- * @param {object} dataJson - The JSON data to be used for analysis.
- * @param {string} apiKey - The API key for accessing the OpenAI API.
- * @returns {Promise<object>} - The response from the OpenAI API.
- */
-export const processResponseGPT = async (prompt, dataJson, apiKey) => {
-  // Convert the dataJson to a formatted JSON string
-  const formattedDataJson = JSON.stringify(dataJson, null, 2);
-  const dynamicInstructions = `
-  You are an assistant designed to analyze and provide accurate insights based on the provided data. Your task is to answer the user's specific query clearly and completely, using the fields in the provided data.
+export const processResponseGPT = async (prompt, dataString, apiKey) => {
+  const dynamicInstructions = `You are an assistant designed to analyze and provide accurate insights based on the provided data. Your task is to answer the user's specific query clearly and completely.Make sure the answer is comprehensive and inclusive answer, if they ask about the amount of something, give an answer that also explains why this is the answer, using the provided data.
 
-  - If the data contains relevant information, generate a user-friendly and complete message based on the user's query.
-  - If the data contains an "error" field or it doesn't have the relevant information, generate a user-friendly message based on the error information provided. Do not simply repeat the error message from the data. Instead, use it to provide a clear and helpful response to the user.
-  - Ensure you answer the user prompt and do not use the word "JSON" in your response.
+  imporntant:
+  -If the data you considered is empty, it will return that at the moment they cannot answer.
+  -If the data contains a status and a message like NOT FOUND, invaild or missing properties, to complete to user requirements.
+  -The user does not understand the numbers of requests and opinions. Formulate his winnings then to a 60-year-old person with no background in computers.
 
   Provided Data:
-  ${formattedDataJson}
+  ${dataString}
 
   User Prompt:
-  ${prompt}
-
-  Provide a complete response to the user based on the provided data.
-`;
-  // const dynamicInstructions = `
-  //   You are an assistant designed to analyze and provide accurate insights based on the provided JSON data. Use the fields in the JSON object to answer the user's specific query in a clear and helpful manner.
-  //   Generate a user-friendly message based on the provided data.
-  //   If the JSON data contains an "error" field, generate a user-friendly message based on the error information provided. Do not simply repeat the error message from the JSON. Instead, use it to provide a clear and helpful response to the user.
-
-  //   JSON Data:
-  //   ${formattedDataJson}
-
-  //   User Prompt:
-  //   ${prompt}
-  // `;
+  ${prompt}`;
 
   const messages = [
-    {
-      role: 'system',
-      content: dynamicInstructions,
-    },
+    { role: 'system', content: dynamicInstructions },
     { role: 'user', content: prompt },
   ];
-  // Prepare the data for the OpenAI API call
+
   const data = {
     model: 'gpt-3.5-turbo',
     messages: messages,
-    max_tokens: 150,
+    max_tokens: 300,
     temperature: 0.5,
     top_p: 1,
     frequency_penalty: 0,
     presence_penalty: 0,
-    stop: ['\n', 'Data:'],
   };
 
-  // Define the OpenAI API endpoint URL
   const url = 'https://api.openai.com/v1/chat/completions';
-
-  // Make the API request and return the response
-  return performOpenAIRequest(url, apiKey, data, false);
+  return await performOpenAIRequest(url, apiKey, data, false);
 };

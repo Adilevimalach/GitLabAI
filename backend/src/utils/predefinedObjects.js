@@ -1,20 +1,4 @@
-/**
- * Array of predefined JSON objects.
- * @type {Array<Object>}
- */
-export const predefinedJsonObjects = [
-  {
-    operation: 'FETCH_UPDATED_REPOSITORIES',
-    parameters: {
-      updatedAfter: 'YYYY-01-01',
-    },
-  },
-  {
-    operation: 'FETCH_REPOSITORY_BY_ID',
-    parameters: {
-      projectId: '',
-    },
-  },
+export const JsonCacheObjects = [
   {
     operation: 'DELETE_REPOSITORY',
     parameters: {
@@ -29,27 +13,34 @@ export const predefinedJsonObjects = [
         name: '',
         description: '',
         visibility: '',
-        default_branch: '',
-        issues_enabled: '',
-        merge_requests_enabled: '',
-        jobs_enabled: '',
-        wiki_enabled: '',
-        container_registry_enabled: '',
-        shared_runners_enabled: '',
       },
     },
   },
+
   {
-    operation: 'OPERATION_NOT_SUPPORTED',
+    operation: 'UPDATE_AFTER_REPOSITORY',
     parameters: {
-      error: 'Missing information in the request',
-      opertionSupported: [
-        'fetch repositories by updated date',
-        'fetch repository by id',
-        'delete repository',
-        'update repository',
+      updated_at: '',
+    },
+  },
+  {
+    operation: 'MORE_INFO_OPERATION',
+    parameters: {
+      projectIds: [''],
+      caches: [
+        'cacheProjectsById',
+        'cacheCommitById',
+        'cacheBranchesById',
+        'cacheContributorsById',
+        'cacheMemberById',
+        'cacheTreesById',
       ],
     },
+  },
+  {
+    operation: 'MISSING_INFO_OPERATION',
+    message:
+      'Missing information for the operation. Please provide the required parameters.',
   },
 ];
 
@@ -69,20 +60,20 @@ export const predefinedJsonObjects = [
   Worst Case Scenario:
   System Message (predefined objects + fields): 700 tokens
   Additional settings and structural information: 100 tokens
-  Total without user prompt: ~800 tokens
+  Total without user prompt: ~1000 tokens
 
 **Cost Calculation Example:**
 1.Cost per Token:
-  $0.002 per 1,000 tokens,Hence, $0.000002 per token. 
+  $0.002 per 2000 tokens,Hence, $0.000004 per token. 
   
 2.Token Usage:
   System Message (predefined objects + fields): 700 tokens
   Additional settings and structural information: 100 tokens
   Total without user prompt: 800 tokens
   Cost Calculation per Component:
-  System Message Cost: 700 tokens × $0.000002 = $0.0014
-  Additional Settings Cost: 100 tokens × $0.000002 = $0.0002
-  Total Cost per API Call (Send + Response): (800 tokens × $0.000002) = $0.0016
+  System Message Cost: 1400 tokens × $0.000002 = $0.0028
+  Additional Settings Cost: 200 tokens × $0.000002 = $0.0004
+  Total Cost per API Call (Send + Response): (1500 tokens × $0.000002) = $0.0032
 
   ***NOTICE: User prompt not included in the calculation above.***
 */

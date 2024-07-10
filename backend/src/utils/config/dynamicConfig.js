@@ -66,11 +66,10 @@ export const updateDynamicConfig = async (
       { accessToken, refreshToken, expiresIn, createdAt }
     );
   }
-  const tokenExpirationTime = createdAt + expiresIn;
   m_dynamicConfig = {
     access_token: accessToken,
     refresh_token: refreshToken,
-    expires_in: tokenExpirationTime.toString(),
+    expires_in: expiresIn,
     scope: scope,
     created_at: createdAt,
   };

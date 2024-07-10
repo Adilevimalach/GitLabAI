@@ -31,7 +31,6 @@ const routes = async (req, res) => {
   if (reqUrl.pathname === '/user-request' && req.method === 'POST') {
     try {
       // Perform basic authentication
-
       await basicAuth(req);
       // Token expiry check
       if (isTokenExpired()) {

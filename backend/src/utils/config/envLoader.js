@@ -18,6 +18,7 @@ const requiredKeys = [
   'BASIC_AUTH_USERNAME',
   'BASIC_AUTH_PASSWORD',
   'OPENAI_API_KEY',
+  'CACHE_UPDATE_INTERVAL',
 ];
 
 /**
@@ -53,5 +54,6 @@ export const getEnvVariables = () => {
     BASIC_AUTH_USERNAME: process.env.BASIC_AUTH_USERNAME,
     BASIC_AUTH_PASSWORD: process.env.BASIC_AUTH_PASSWORD,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    CACHE_UPDATE_INTERVAL: process.env.CACHE_UPDATE_INTERVAL,
   };
 };

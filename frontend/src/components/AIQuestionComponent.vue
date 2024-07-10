@@ -4,11 +4,20 @@
       <input v-model="query" placeholder="Ask a question" />
       <button @click="fetchData" :disabled="isLoading">ASK</button>
     </div>
-    <div v-if="answer || error" class="response-box">
-      <h3 v-if="answer">Answer:</h3>
-      <p v-if="answer">{{ answer }}</p>
-      <h3 v-if="error" class="error-title">Error:</h3>
-      <p v-if="error" class="error-message">{{ error }}</p>
+    <div v-if="answer || error || isLoading" class="response-box">
+      <template v-if="isLoading">
+        <div class="loading-dots">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+      </template>
+      <template v-else>
+        <h3 v-if="answer || error" class="response-title"></h3>
+        <p v-if="answer">{{ answer }}</p>
+        <h3 v-if="error" class="error-title">Error:</h3>
+        <p v-if="error" class="error-message">{{ error }}</p>
+      </template>
     </div>
     <RepositoriesComponent
       v-if="repositories.length"
@@ -27,22 +36,20 @@ export default {
   },
   data() {
     return {
-      query: '', // Added to bind the input field
+      query: '',
       answer: '',
       repositories: [],
-      error: '', // Added to store error messages
-      isLoading: false, // Loading state
+      error: '',
+      isLoading: false,
     };
   },
   methods: {
     async fetchData() {
-      //hardcoded username and password for basic auth. need to store it securely
       const userName = process.env.VUE_APP_USER_NAME;
       const password = process.env.VUE_APP_PASSWORD;
-      console.log(userName, password);
       const credentials = `${userName}:${password}`;
       const encodedCredentials = btoa(credentials);
-      this.isLoading = true; // Start loading
+      this.isLoading = true;
       try {
         const response = await fetch('http://localhost:3000/user-request', {
           method: 'POST',
@@ -52,31 +59,27 @@ export default {
           },
           body: JSON.stringify({ query: this.query }),
         });
-        console.log(response);
         if (response.ok) {
           const data = await response.json();
           this.handleResponse(data);
         } else {
-          const errorData = await response.json(); // Parse error JSON
+          const errorData = await response.json();
           this.handleError(`Error ${response.status}: ${errorData.message}`);
         }
       } catch (error) {
-        console.log('Error:', error);
         this.handleError(`Fetch error: ${error.message}`);
       }
-      this.isLoading = false; // Stop loading
+      this.isLoading = false;
     },
     handleResponse(data) {
-      console.log('Response received in AIQuestionComponent:', data);
-      this.answer = data.responseData; // Update this line
+      this.answer = data.responseData;
       this.repositories = data.repositories || [];
-      this.error = ''; // Clear error on successful response
+      this.error = '';
     },
     handleError(errorMessage) {
-      console.log('Error received in AIQuestionComponent:', errorMessage);
       this.error = errorMessage;
-      this.answer = ''; // Clear previous answer on error
-      this.repositories = []; // Clear repositories on error
+      this.answer = '';
+      this.repositories = [];
     },
   },
 };
@@ -88,9 +91,9 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 75vh;
+  min-height: 75vh;
   background-color: #f0f4f8;
-  padding: 20px;
+  padding: 10px;
   box-sizing: border-box;
 }
 
@@ -104,6 +107,8 @@ export default {
   background-color: #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
+  width: 100%;
+  max-width: 800px;
 }
 
 .search-box:hover {
@@ -118,6 +123,58 @@ export default {
   border-radius: 10px;
   background-color: #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 150px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.response-title {
+  margin: 0;
+  text-align: center;
+  width: 100%;
+}
+
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dot {
+  height: 12px;
+  width: 12px;
+  margin: 0 5px;
+  background-color: #007bff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: dot-bounce 1.4s infinite both;
+}
+
+.dot:nth-child(1) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.4s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+@keyframes dot-bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
 }
 
 .error-title {
@@ -130,7 +187,8 @@ export default {
 
 input {
   padding: 10px;
-  width: 300px;
+  width: 100%;
+  max-width: 500px;
   margin-bottom: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -144,6 +202,8 @@ button {
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  width: 100%;
+  max-width: 100px;
 }
 
 button:disabled {
@@ -153,5 +213,20 @@ button:disabled {
 
 button:hover:enabled {
   background-color: #0056b3;
+}
+
+@media (max-width: 600px) {
+  .response-box {
+    height: auto;
+    padding: 10px;
+  }
+
+  .search-box {
+    padding: 10px;
+  }
+
+  button {
+    max-width: 80px;
+  }
 }
 </style>

@@ -38,7 +38,7 @@ export default {
           this.onError(`Error ${response.status}: ${errorText}`);
         }
       } catch (error) {
-        this.onError(`Fetch error: ${error.message}`);
+        this.onError(`Server error: ${error.message}`);
       }
       this.$emit('update:isLoading', false); // Stop loading
     },
