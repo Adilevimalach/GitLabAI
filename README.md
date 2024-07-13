@@ -91,8 +91,9 @@ npm install
 **Add configuration to `.env` file in the frontend directory of your project and add the following variables:**
 
 ```sh
-BASIC_AUTH_USERNAME=
-BASIC_AUTH_PASSWORD=
+VUE_APP_USER_NAME=
+VUE_APP_PASSWORD=
+
 ```
 
 ## Usage
