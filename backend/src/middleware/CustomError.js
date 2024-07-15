@@ -51,6 +51,7 @@
  */
 class CustomError extends Error {
   constructor(err, identifier, status = null, type = null, context = {}) {
+    const message = err.message || 'An error occurred';
     super(message);
 
     this.identifier = identifier;

@@ -25,9 +25,14 @@ const basicAuth = async (req, res, next) => {
     const validUsername = config.BASIC_AUTH_USERNAME;
     const validPassword = config.BASIC_AUTH_PASSWORD;
     if (username !== validUsername || password !== validPassword) {
-      throw new CustomError('Invalid username or password', 401, 'Auth', {
-        authHeader: authHeader,
-      });
+      const error = {
+        message: 'Invalid username or password',
+        status: 401,
+        type: 'Auth',
+        context: { authHeader },
+      };
+
+      throw new CustomError(error, 'INVALID_CREDENTIALS');
     }
     next();
   } catch (error) {
