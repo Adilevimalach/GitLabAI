@@ -69,7 +69,7 @@ export const loadConfiguration = async () => {
     } else {
       config = { ...staticConfig, ...dynamicConfig };
       if (isTokenExpired()) {
-        await getRefreshToken(); // This updates the global config
+        await getRefreshToken();
       }
     }
   } catch (error) {

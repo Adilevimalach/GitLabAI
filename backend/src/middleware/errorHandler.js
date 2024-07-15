@@ -17,7 +17,6 @@ class ErrorHandler {
       RefreshTokenError: this.handleRefreshTokenError,
       APIError: this.handleAPIRequestError,
       ConfigError: this.handleConfigError,
-      // Add other custom error types as needed
     };
   }
 

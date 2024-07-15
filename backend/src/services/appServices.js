@@ -1,4 +1,8 @@
 import { requestHandler } from './requestHandler.js';
+import {
+  JsonCacheObjects,
+  preDefinedPromptGPTSystemMessage,
+} from '../utils/predefinedObjects.js';
 
 /**
  * Builds the URL for GitLab API requests based on project ID and endpoint specifics.
@@ -164,4 +168,99 @@ export const updateRepositoryById = async (projectId, updates, accessToken) => {
     message: updateResponse.statusText,
     updates: updates,
   };
+};
+
+/**
+ * Performs an OpenAI request.
+ *
+ * @param {string} apiUrl - The URL of the OpenAI API.
+ * @param {string} apiKey - The API key for authentication.
+ * @param {Object} requestData - The data to be sent in the request.
+ * @param {boolean} [expectJsonResponse=true] - Indicates whether to expect a JSON response.
+ * @returns {Promise<Object|string>} - The response from the OpenAI API.
+ * @throws {Error} - If there is an error performing the request or parsing the response.
+ */
+const performOpenAIRequest = async (
+  apiUrl,
+  apiKey,
+  requestData,
+  expectJsonResponse = true
+) => {
+  return requestHandler(apiUrl, 'POST', apiKey, requestData)
+    .then((response) => {
+      const responseContent = response.body.choices[0].message.content.trim();
+      if (!expectJsonResponse) return responseContent;
+      try {
+        return JSON.parse(responseContent);
+      } catch (parseError) {
+        throw new Error(`Failed to parse JSON response: ${parseError.message}`);
+      }
+    })
+    .catch((error) => {
+      throw new Error(`Error performing the API request: ${error.message}`);
+    });
+};
+
+/**
+ * Processes the user prompt using the GPT-3.5-turbo model and caches the response.
+ * @param {string} prompt - The user prompt to process.
+ * @param {string} apiKey - The API key for accessing the OpenAI service.
+ * @returns {Promise} - A promise that resolves to the response from the OpenAI service.
+ */
+export const processPromptGPTToCache = async (prompt, apiKey) => {
+  const predefinedJsonString = JSON.stringify(JsonCacheObjects);
+
+  const editedPrompt = `Based on the user input: "${prompt}", identify the appropriate operation from the options: DELETE_REPOSITORY, UPDATE_REPOSITORY, UPDATE_AFTER_REPOSITORY, MORE_INFO_OPERATION, APP_INFO, and MISSING_INFO_OPERATION. Extract relevant details such as project IDs, update fields, or dates from the input to populate the predefined JSON object for the identified operation.
+
+  Predefined operations and their expected data formats are:
+  ${predefinedJsonString}`;
+
+  const data = {
+    model: 'gpt-3.5-turbo',
+    messages: [
+      { role: 'system', content: preDefinedPromptGPTSystemMessage },
+      { role: 'user', content: editedPrompt },
+    ],
+    max_tokens: 200,
+    temperature: 0,
+    top_p: 1,
+    frequency_penalty: 0,
+    presence_penalty: 0,
+  };
+
+  const url = 'https://api.openai.com/v1/chat/completions';
+  return await performOpenAIRequest(url, apiKey, data, true);
+};
+
+export const processResponseGPT = async (prompt, dataString, apiKey) => {
+  const dynamicInstructions = `You are an assistant designed to analyze and provide accurate insights based on the provided data. Your task is to answer the user's specific query clearly and completely. Make sure the answer is comprehensive and inclusive. If they ask about the amount of something, give an answer that also explains why this is the answer, using the provided data.
+
+  Important:
+  - If the data you considered is empty, inform the user that at the moment you cannot answer.
+  - If the data contains a status and a message like NOT FOUND, invalid, or missing properties, inform the user and explain what is needed to complete their requirements.
+  - The user does not understand technical jargon. Formulate your response as if explaining to a 60-year-old person with no background in computers.
+
+  Provided Data:
+  ${dataString}
+
+  User Prompt:
+  ${prompt}`;
+
+  const messages = [
+    { role: 'system', content: dynamicInstructions },
+    { role: 'user', content: prompt },
+  ];
+
+  const data = {
+    model: 'gpt-3.5-turbo',
+    messages: messages,
+    max_tokens: 300,
+    temperature: 0.5,
+    top_p: 1,
+    frequency_penalty: 0,
+    presence_penalty: 0,
+  };
+
+  const url = 'https://api.openai.com/v1/chat/completions';
+  return await performOpenAIRequest(url, apiKey, data, false);
 };

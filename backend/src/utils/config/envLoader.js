@@ -43,7 +43,6 @@ const validateEnvVariables = () => {
  */
 export const getEnvVariables = () => {
   validateEnvVariables();
-
   return {
     PORT: process.env.PORT,
     CLIENT_ID: process.env.CLIENT_ID,

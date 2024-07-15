@@ -45,11 +45,13 @@ const cacheDict = caches.reduce((acc, cacheObj) => {
  * @type {Date}
  */
 let lastUpdateTime = new Date();
+
 /**
  * The interval in milliseconds for updating the cache.
  * @type {number}
  */
 const interval = config.CACHE_UPDATE_INTERVAL * 60 * 1000;
+
 /**
  * Updates all caches by project ID.
  * @param {string} projectId - The ID of the project.
@@ -96,9 +98,8 @@ export const removeProjectFromCaches = async (projectId) => {
       }
     });
   } catch (error) {
-    //TODO: Add error handling
-    console.error(
-      `Failed to remove project ID: ${projectId} from caches: ${error}`
+    throw new Error(
+      `Failed to remove project ${projectId} from caches: ${error}`
     );
   }
 };
@@ -192,7 +193,6 @@ export const updateCachesByTime = async () => {
         lastUpdateTime.toISOString(),
         config.access_token
       );
-      // console.log('Updated repositories:', updatedRepositories);
       if (updatedRepositories.length === 0) {
         lastUpdateTime = new Date();
         return;
@@ -214,7 +214,7 @@ export const updateCachesByTime = async () => {
 
       lastUpdateTime = new Date().toISOString();
     } catch (error) {
-      console.error(`Failed to fetch and update repositories:`, error);
+      throw new Error(`Failed to update caches by time: ${error}`);
     }
   }
 };
@@ -275,7 +275,7 @@ const initializeCacheProject = async () => {
  * @returns {Promise<void>} A promise that resolves when all caches have been initialized successfully.
  */
 export const initializeAllCaches = async () => {
-  await initializeCacheProject(); // Ensure this completes successfully
+  await initializeCacheProject();
 
   const cacheInitializations = [
     'cacheCommitsById',
@@ -293,5 +293,4 @@ export const initializeAllCaches = async () => {
       console.warn(`Cache entry for ${cacheName} is undefined.`);
     }
   }
-  console.log('All caches have been initialized successfully.');
 };

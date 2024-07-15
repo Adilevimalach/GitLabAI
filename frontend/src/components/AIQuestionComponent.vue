@@ -41,13 +41,20 @@ export default {
       repositories: [],
       error: '',
       isLoading: false,
+      username: '',
+      password: '',
+      hasCredentials: false,
     };
   },
   methods: {
     async fetchData() {
-      const userName = process.env.VUE_APP_USER_NAME;
-      const password = process.env.VUE_APP_PASSWORD;
-      const credentials = `${userName}:${password}`;
+      if (!this.hasCredentials) {
+        this.username = prompt('Enter username:');
+        this.password = prompt('Enter password:');
+        this.hasCredentials = true;
+      }
+
+      const credentials = `${this.username}:${this.password}`;
       const encodedCredentials = btoa(credentials);
       this.isLoading = true;
       try {

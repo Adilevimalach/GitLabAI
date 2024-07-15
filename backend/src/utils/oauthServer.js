@@ -1,5 +1,3 @@
-// Code for the OAuth server and token refresh functionality
-
 import http from 'http';
 import { URL } from 'url';
 import fetch from 'node-fetch';
@@ -12,6 +10,7 @@ import CustomError from '../middleware/CustomError.js'; // Import the CustomErro
  * @type {Object}
  */
 let server;
+let connections = {};
 
 /**
  * Constructs the authorization URL for OAuth authentication.
@@ -37,16 +36,16 @@ const constructAuthorizationUrl = (staticConfig) => {
  */
 const openAuthorizationUrl = (staticConfig) => {
   const authorizationUrl = constructAuthorizationUrl(staticConfig);
-  exec(`start "" "${authorizationUrl}"`, (error) => {
+  const command =
+    process.platform === 'darwin'
+      ? `open "${authorizationUrl}"`
+      : `start "" "${authorizationUrl}"`;
+  exec(command, (error) => {
     if (error) {
-      throw new CustomError(
-        'Error opening authorization URL',
-        500,
-        'AuthorizationUrlError',
-        { originalError: error.message },
-        null,
-        authorizationUrl
-      );
+      throw {
+        type: 'URLOpenError',
+        error: error,
+      };
     }
   });
 };
@@ -57,17 +56,9 @@ const openAuthorizationUrl = (staticConfig) => {
  * @param {Object} res - The response object.
  * @param {string} code - The authorization code received from the OAuth provider.
  * @param {Object} staticConfig - The static configuration object containing client ID, client secret, redirect URI, and token URL.
- * @param {Function} resolve - The function to resolve the promise.
- * @param {Function} reject - The function to reject the promise.
- * @returns {void}
+ * @returns {Promise<void>} - Resolves when the server closes.
  */
-const handleOAuthCallback = async (
-  res,
-  code,
-  staticConfig,
-  resolve,
-  reject
-) => {
+const handleOAuthCallback = async (res, code, staticConfig) => {
   const params = new URLSearchParams({
     client_id: staticConfig.CLIENT_ID,
     client_secret: staticConfig.CLIENT_SECRET,
@@ -85,21 +76,21 @@ const handleOAuthCallback = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      reject(
-        new CustomError(
-          `OAuth token request failed: ${response.status}`,
-          500,
-          'OAuthCallbackError',
-          { response: errorText },
-          null,
-          staticConfig.TOKEN_URL
-        )
+      console.error(
+        `Token exchange failed with status ${response.status}: ${errorText}`
       );
-      return;
+      throw new CustomError(
+        `OAuth token request failed: ${response.status}`,
+        500,
+        'OAuthCallbackError',
+        { response: errorText },
+        null,
+        staticConfig.TOKEN_URL
+      );
     }
 
     const data = await response.json();
-    updateDynamicConfig(
+    await updateDynamicConfig(
       data.access_token,
       data.refresh_token,
       data.expires_in,
@@ -109,34 +100,44 @@ const handleOAuthCallback = async (
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(data));
-    server.close(() => {
-      resolve();
+
+    // Attempt to close the server gracefully
+    return new Promise((resolve) => {
+      server.close(() => {
+        resolve();
+      });
+
+      // Destroy open connections after a timeout to force closure
+      setTimeout(() => {
+        for (const key in connections) {
+          connections[key].destroy();
+        }
+        resolve();
+      }, 3000); // Increased timeout to 3 seconds
     });
   } catch (error) {
-    reject(
-      new CustomError(
-        'OAuth callback processing error',
-        500, // Status code for server error
-        'OAuthCallbackError',
-        { originalError: error.message },
-        null,
-        staticConfig.TOKEN_URL
-      )
+    console.error('Error processing OAuth callback:', error);
+    throw new CustomError(
+      'OAuth callback processing error',
+      500,
+      'OAuthCallbackError',
+      { originalError: error.message },
+      null,
+      staticConfig.TOKEN_URL
     );
   }
 };
 
-//TODO: check error handling
 /**
  * Creates an OAuth server.
  * @param {Object} staticConfig - The static configuration object.
- * @returns {Promise} A promise that resolves when the server is created.
+ * @returns {Promise<void>} A promise that resolves when the server is created.
  * @throws {CustomError} - If there is an error creating the server.
  */
-export const createServer = (staticConfig) => {
+export const createServer = async (staticConfig) => {
   return new Promise((resolve, reject) => {
     server = http
-      .createServer((req, res) => {
+      .createServer(async (req, res) => {
         const reqUrl = new URL(
           req.url,
           `http://localhost:${staticConfig.PORT}`
@@ -145,13 +146,16 @@ export const createServer = (staticConfig) => {
           reqUrl.pathname === '/oauth/callback' &&
           reqUrl.searchParams.has('code')
         ) {
-          handleOAuthCallback(
-            res,
-            reqUrl.searchParams.get('code'),
-            staticConfig,
-            resolve,
-            reject
-          );
+          try {
+            await handleOAuthCallback(
+              res,
+              reqUrl.searchParams.get('code'),
+              staticConfig
+            );
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
         } else {
           res.writeHead(404, { 'Content-Type': 'text/plain' });
           res.end('Not Found');
@@ -164,7 +168,16 @@ export const createServer = (staticConfig) => {
         openAuthorizationUrl(staticConfig);
       });
 
+    server.on('connection', (conn) => {
+      const key = `${conn.remoteAddress}:${conn.remotePort}`;
+      connections[key] = conn;
+      conn.on('close', () => {
+        delete connections[key];
+      });
+    });
+
     server.on('error', (error) => {
+      console.error('Server error:', error);
       reject(
         new CustomError(
           'Server error',
@@ -205,6 +218,9 @@ export const refreshAccessToken = async (config) => {
     });
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(
+        `Error refreshing access token: ${response.status} - ${errorText}`
+      );
       throw new CustomError(
         `Error refreshing access token: ${response.status}`,
         errorText,
@@ -215,7 +231,7 @@ export const refreshAccessToken = async (config) => {
     }
 
     const data = await response.json();
-    updateDynamicConfig(
+    await updateDynamicConfig(
       data.access_token,
       data.refresh_token,
       data.expires_in,
@@ -223,6 +239,7 @@ export const refreshAccessToken = async (config) => {
       data.created_at
     );
   } catch (error) {
+    console.error('Network error during token refresh:', error);
     throw new CustomError(
       'Network error during token refresh',
       error,

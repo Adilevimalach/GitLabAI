@@ -1,8 +1,7 @@
-import http from 'http';
+import express from 'express';
 import routes from './routes/requestRoutes.js';
 import { loadConfiguration } from './utils/config.js';
 import ErrorHandler from './middleware/errorHandler.js';
-import CustomError from './middleware/CustomError.js';
 import { initializeAllCaches } from './utils/cache.js';
 
 /**
@@ -11,17 +10,15 @@ import { initializeAllCaches } from './utils/cache.js';
  * @returns {void}
  */
 const shutdown = (server) => {
-  // Close the server
   server.close(() => {
     console.log('Server shut down gracefully.');
     process.exit(0);
   });
 
-  // Force shutdown after a timeout
   setTimeout(() => {
     console.error('Forcing shutdown due to open connections.');
     process.exit(1);
-  }, 3000); // Timeout in milliseconds
+  }, 3000);
 };
 
 /**
@@ -31,19 +28,23 @@ const shutdown = (server) => {
 async function main() {
   try {
     const config = await loadConfiguration();
-    initializeAllCaches().catch((error) =>
-      console.error('Cache initialization failed:', error)
-    );
-    const PORT = config.PORT || 3000;
-    const server = http.createServer(routes);
+    await initializeAllCaches();
 
-    server.listen(PORT, () => {
+    const app = express();
+    const PORT = config.PORT || 3000;
+
+    app.use(express.json());
+    app.use('', routes);
+    app.use((err, req, res, next) => {
+      ErrorHandler.handleError(err, res);
+    });
+
+    const server = app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });
 
     server.on('error', (error) => {
       ErrorHandler.handleError(
-        res,
         new CustomError('Server encountered an error', 500, 'ServerError', {
           originalError: error.message,
         })
