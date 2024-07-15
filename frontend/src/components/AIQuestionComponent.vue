@@ -56,6 +56,7 @@ export default {
 
       const credentials = `${this.username}:${this.password}`;
       const encodedCredentials = btoa(credentials);
+
       this.isLoading = true;
       try {
         const response = await fetch('http://localhost:3000/user-request', {
@@ -68,6 +69,7 @@ export default {
         });
         if (response.ok) {
           const data = await response.json();
+
           this.handleResponse(data);
         } else {
           const errorData = await response.json();
@@ -87,6 +89,7 @@ export default {
       this.error = errorMessage;
       this.answer = '';
       this.repositories = [];
+      this.hasCredentials = false;
     },
   },
 };
