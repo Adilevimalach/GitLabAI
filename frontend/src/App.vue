@@ -1,30 +1,3 @@
-<!-- <template>
-  <div id="app">
-    <header>
-      <h1>GitLab Repository Search and AI Questions</h1>
-    </header>
-    <AIQuestionComponent />
-  </div>
-</template>
-
-<script>
-import AIQuestionComponent from './components/AIQuestionComponent.vue';
-
-export default {
-  components: {
-    AIQuestionComponent,
-  },
-};
-</script>
-
-<style>
-#app {
-  text-align: center;
-}
-header {
-  margin-bottom: 20px;
-}
-</style> -->
 <template>
   <div id="app">
     <header>

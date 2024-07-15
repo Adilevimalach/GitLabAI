@@ -1,5 +1,3 @@
-// Description: This file contains the requestHandler function that is used to make API requests.
-
 import fetch from 'node-fetch';
 import CustomError from '../middleware/CustomError.js';
 
@@ -19,7 +17,7 @@ export const requestHandler = async (url, method, accessToken, body = null) => {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    timeout: 5000, // TODO:5 seconds timeout for the entire request
+    timeout: 5000,
   };
   if (body) {
     options.body = JSON.stringify(body);

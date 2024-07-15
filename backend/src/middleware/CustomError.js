@@ -50,13 +50,14 @@
  * @param {Object} [context={}] - Additional context-specific information.
  */
 class CustomError extends Error {
-  constructor(message, status = null, type = null, context = {}) {
+  constructor(err, identifier, status = null, type = null, context = {}) {
     super(message);
-    this.identifier = ''; // New unique identifier
-    this.status = status; // HTTP status code or custom status identifier
-    this.type = type; // Type of operation (e.g., 'FileRead', 'FileWrite', 'Network', etc.)
-    this.context = context; // Additional context-specific information
-    this.stack = this.stack; // Stack trace of the error, useful for debugging
+
+    this.identifier = identifier;
+    this.status = status || (err && err.status) || null;
+    this.type = type || (err && err.type) || null;
+    this.context = context || (err && err.context) || {};
+    this.stack = (err && err.stack) || this.stack;
   }
 }
 

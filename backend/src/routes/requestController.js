@@ -21,11 +21,6 @@ export const handleUserRequest = async (req) => {
       query,
       config.OPENAI_API_KEY
     );
-
-    //
-    console.log('aiResponseOperation:', aiResponseOperation);
-    //
-
     switch (aiResponseOperation.operation) {
       case 'MORE_INFO_OPERATION': {
         const data = cachesOperations.getInfoFromCaches(

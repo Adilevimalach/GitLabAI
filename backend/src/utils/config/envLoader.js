@@ -28,12 +28,15 @@ const requiredKeys = [
 const validateEnvVariables = () => {
   const missingKeys = requiredKeys.filter((key) => !process.env[key]);
   if (missingKeys.length > 0) {
-    throw new CustomError(
-      `Missing required environment variables: ${missingKeys.join(', ')}`,
-      500,
-      'EnvConfigMissing',
-      { missingKeys }
-    );
+    const error = {
+      message: `Missing required environment variables: ${missingKeys.join(
+        ', '
+      )}`,
+      status: 500,
+      type: null,
+      context: 'EnvConfigMissing',
+    };
+    throw new CustomError(error, 'ENV_CONFIG_MISSING');
   }
 };
 

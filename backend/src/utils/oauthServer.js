@@ -1,16 +1,8 @@
-import http from 'http';
-import { URL } from 'url';
 import fetch from 'node-fetch';
 import { exec } from 'child_process';
 import { updateDynamicConfig } from './config/dynamicConfig.js';
-import CustomError from '../middleware/CustomError.js'; // Import the CustomError class
-
-/**
- * The OAuth server instance.
- * @type {Object}
- */
-let server;
-let connections = {};
+import CustomError from '../middleware/CustomError.js';
+import { loadConfiguration } from '../utils/config.js';
 
 /**
  * Constructs the authorization URL for OAuth authentication.
@@ -34,7 +26,7 @@ const constructAuthorizationUrl = (staticConfig) => {
  *
  * @param {Object} staticConfig - The static configuration object.
  */
-const openAuthorizationUrl = (staticConfig) => {
+export const openAuthorizationUrl = (staticConfig) => {
   const authorizationUrl = constructAuthorizationUrl(staticConfig);
   const command =
     process.platform === 'darwin'
@@ -42,10 +34,7 @@ const openAuthorizationUrl = (staticConfig) => {
       : `start "" "${authorizationUrl}"`;
   exec(command, (error) => {
     if (error) {
-      throw {
-        type: 'URLOpenError',
-        error: error,
-      };
+      throw new CustomError(error, 'OPEN_AUTHORIZATION_URL_ERROR');
     }
   });
 };
@@ -53,12 +42,14 @@ const openAuthorizationUrl = (staticConfig) => {
 /**
  * Handles the OAuth callback by exchanging the authorization code for an access token.
  *
+ * @param {Object} req - The request object.
  * @param {Object} res - The response object.
- * @param {string} code - The authorization code received from the OAuth provider.
- * @param {Object} staticConfig - The static configuration object containing client ID, client secret, redirect URI, and token URL.
- * @returns {Promise<void>} - Resolves when the server closes.
+ * @returns {Promise<void>}
  */
-const handleOAuthCallback = async (res, code, staticConfig) => {
+export const oauthCallbackHandler = async (req, res) => {
+  const staticConfig = await loadConfiguration();
+  const code = req.query.code;
+
   const params = new URLSearchParams({
     client_id: staticConfig.CLIENT_ID,
     client_secret: staticConfig.CLIENT_SECRET,
@@ -75,18 +66,7 @@ const handleOAuthCallback = async (res, code, staticConfig) => {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(
-        `Token exchange failed with status ${response.status}: ${errorText}`
-      );
-      throw new CustomError(
-        `OAuth token request failed: ${response.status}`,
-        500,
-        'OAuthCallbackError',
-        { response: errorText },
-        null,
-        staticConfig.TOKEN_URL
-      );
+      throw new CustomError(response, 'TOKEN_REQUEST_ERROR');
     }
 
     const data = await response.json();
@@ -100,95 +80,10 @@ const handleOAuthCallback = async (res, code, staticConfig) => {
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(data));
-
-    // Attempt to close the server gracefully
-    return new Promise((resolve) => {
-      server.close(() => {
-        resolve();
-      });
-
-      // Destroy open connections after a timeout to force closure
-      setTimeout(() => {
-        for (const key in connections) {
-          connections[key].destroy();
-        }
-        resolve();
-      }, 3000); // Increased timeout to 3 seconds
-    });
   } catch (error) {
     console.error('Error processing OAuth callback:', error);
-    throw new CustomError(
-      'OAuth callback processing error',
-      500,
-      'OAuthCallbackError',
-      { originalError: error.message },
-      null,
-      staticConfig.TOKEN_URL
-    );
+    res.status(500).json({ error: 'OAuth callback error' });
   }
-};
-
-/**
- * Creates an OAuth server.
- * @param {Object} staticConfig - The static configuration object.
- * @returns {Promise<void>} A promise that resolves when the server is created.
- * @throws {CustomError} - If there is an error creating the server.
- */
-export const createServer = async (staticConfig) => {
-  return new Promise((resolve, reject) => {
-    server = http
-      .createServer(async (req, res) => {
-        const reqUrl = new URL(
-          req.url,
-          `http://localhost:${staticConfig.PORT}`
-        );
-        if (
-          reqUrl.pathname === '/oauth/callback' &&
-          reqUrl.searchParams.has('code')
-        ) {
-          try {
-            await handleOAuthCallback(
-              res,
-              reqUrl.searchParams.get('code'),
-              staticConfig
-            );
-            resolve();
-          } catch (err) {
-            reject(err);
-          }
-        } else {
-          res.writeHead(404, { 'Content-Type': 'text/plain' });
-          res.end('Not Found');
-        }
-      })
-      .listen(staticConfig.PORT, () => {
-        console.log(
-          `OAuth server started on http://localhost:${staticConfig.PORT}`
-        );
-        openAuthorizationUrl(staticConfig);
-      });
-
-    server.on('connection', (conn) => {
-      const key = `${conn.remoteAddress}:${conn.remotePort}`;
-      connections[key] = conn;
-      conn.on('close', () => {
-        delete connections[key];
-      });
-    });
-
-    server.on('error', (error) => {
-      console.error('Server error:', error);
-      reject(
-        new CustomError(
-          'Server error',
-          500,
-          'ServerError',
-          { originalError: error.message },
-          `http://localhost:${staticConfig.PORT}`
-        )
-      );
-    });
-  });
 };
 
 /**
@@ -221,13 +116,7 @@ export const refreshAccessToken = async (config) => {
       console.error(
         `Error refreshing access token: ${response.status} - ${errorText}`
       );
-      throw new CustomError(
-        `Error refreshing access token: ${response.status}`,
-        errorText,
-        'OAuthRefreshError',
-        {},
-        config.TOKEN_URL
-      );
+      throw new CustomError(response, 'REFRESH_TOKEN_ERROR');
     }
 
     const data = await response.json();
