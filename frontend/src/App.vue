@@ -10,34 +10,8 @@
 <script>
 import AIQuestionComponent from './components/AIQuestionComponent.vue';
 
-function authFetch(url, options = {}) {
-  const username = sessionStorage.getItem('username');
-  const password = sessionStorage.getItem('password');
-
-  if (username && password) {
-    const credentials = btoa(`${username}:${password}`);
-    options.headers = {
-      ...options.headers,
-      Authorization: `Basic ${credentials}`,
-    };
-  }
-
-  return fetch(url, options);
-}
 export default {
   name: 'App',
-  created() {
-    const username = sessionStorage.getItem('username');
-    const password = sessionStorage.getItem('password');
-    if (username && password) {
-      this.$store.commit('setAuthenticated', true);
-    }
-  },
-  methods: {
-    fetchWithAuth(url, options) {
-      return authFetch(url, options);
-    },
-  },
   components: {
     AIQuestionComponent,
   },

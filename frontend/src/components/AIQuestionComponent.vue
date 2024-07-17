@@ -19,26 +19,16 @@
         <p v-if="error" class="error-message">{{ error }}</p>
       </template>
     </div>
-    <RepositoriesComponent
-      v-if="repositories.length"
-      :repositories="repositories"
-    />
   </div>
 </template>
 
 <script>
-import RepositoriesComponent from './RepositoriesComponent.vue';
-
 export default {
   name: 'AIQuestionComponent',
-  components: {
-    RepositoriesComponent,
-  },
   data() {
     return {
       query: '',
       answer: '',
-      repositories: [],
       error: '',
       isLoading: false,
       username: '',
@@ -58,6 +48,9 @@ export default {
       const encodedCredentials = btoa(credentials);
 
       this.isLoading = true;
+      this.answer = '';
+      this.error = '';
+
       try {
         const response = await fetch('http://localhost:3000/user-request', {
           method: 'POST',
@@ -69,7 +62,6 @@ export default {
         });
         if (response.ok) {
           const data = await response.json();
-
           this.handleResponse(data);
         } else {
           const errorData = await response.json();
@@ -82,14 +74,12 @@ export default {
     },
     handleResponse(data) {
       this.answer = data.responseData;
-      this.repositories = data.repositories || [];
-      this.error = '';
     },
     handleError(errorMessage) {
       this.error = errorMessage;
-      this.answer = '';
-      this.repositories = [];
-      this.hasCredentials = false;
+      if (this.error.includes('401')) {
+        this.hasCredentials = false;
+      }
     },
   },
 };
